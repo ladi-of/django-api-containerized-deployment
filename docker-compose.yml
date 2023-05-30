@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15.3-alpine3.18
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    env_file: 
+      - .env
+    networks:
+      - backend
+      
+  web:
+    build: ./app
+    command: >
+      bash -c "
+      python manage.py wait_for_db &&
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py makemigrations api &&
+      python manage.py load_users ./data/users.csv &&
+      python manage.py migrate api &&
+      gunicorn backend.wsgi:application --bind 0.0.0.0:8000
+      "
+    volumes:
+      - ./app/:/app/
+    depends_on:
+      - db
+    networks:
+      - backend
+
+  nginx:
+    restart: always
+    build: ./nginx
+    ports:
+      - 80:80
+    depends_on:
+      - web
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge

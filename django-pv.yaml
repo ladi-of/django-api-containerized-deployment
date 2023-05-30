@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: django-pv
+spec:
+  storageClassName: manual
+  hostPath:
+    path: "/app/storage1"
+  capacity:
+    storage: 7Gi
+  accessModes:
+  - ReadWriteMany
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: django-pvc
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3Gi

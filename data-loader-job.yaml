@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: data-loader
+  namespace: default
+spec:
+  template:
+    metadata:
+      name: data-loader
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: data-loader
+        image: localhost:5000/djangol-api
+        securityContext:
+          runAsUser: 999
+          runAsGroup: 999
+          allowPrivilegeEscalation: false
+        command: ["sh", "-c", "python manage.py load_users /app/storage1/users.csv && python manage.py makemigrations && python manage.py migrate"]
+        env:
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: django-secret
+              key: SECRET_KEY
+        - name: NAME
+          valueFrom:
+            secretKeyRef:
+              name: django-secret
+              key: NAME
+        - name: USER
+          valueFrom:
+            secretKeyRef:
+              name: django-secret
+              key: USER
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: django-secret
+              key: PASSWORD
+        - name: HOST
+          value: postgres-service
+        volumeMounts:
+        - name: users-csv-volume
+          mountPath: /app/storage1/users.csv
+          subPath: users.csv
+      volumes:
+      - name: users-csv-volume
+        configMap:
+          name: users-csv
+          items:
+          - key: users.csv
+            path: users.csv
+      restartPolicy: Never

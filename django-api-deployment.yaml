@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: django-app
+  template:
+    metadata:
+      labels:
+        app: django-app
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: django-app
+          image: localhost:5000/djangol-api
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 200m
+              memory: 500Mi
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: SECRET_KEY
+            - name: HOST
+              value: postgres-service
+            - name: USER
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: USER
+            - name: NAME
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: NAME
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: django-secret
+                  key: PASSWORD
+          volumeMounts:
+            - mountPath: /app/storage1/
+              name: django-pv
+      volumes:
+        - name: django-pv
+          persistentVolumeClaim:
+            claimName: django-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-service
+spec:
+  selector:
+    app: django-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer

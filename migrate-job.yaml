@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-migrate-job
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+      - name: django-migrate
+        image: localhost:5000/djangol-api
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          runAsUser: 999
+          runAsGroup: 999
+          allowPrivilegeEscalation: false        
+        command: ["/bin/sh", "-c", "python manage.py makemigrations && python manage.py migrate"]
+        env:
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: django-secret
+                key: SECRET_KEY
+          - name: HOST
+            value: postgres-service
+          - name: USER
+            valueFrom:
+              secretKeyRef:
+                name: django-secret
+                key: USER
+          - name: NAME
+            valueFrom:
+              secretKeyRef:
+                name: django-secret
+                key: NAME
+          - name: PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: django-secret
+                key: PASSWORD
+      restartPolicy: Never

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: users-csv
+data:
+  users.csv: |
+    id,name
+    1,Foo Barrington
+    2,Jane Doerty
+    3,John Douglas
+    4,Penny Merryweather
+    5,Jonathan Snowly
